@@ -79,6 +79,12 @@ folder(datafolder) {
     std::copy(x.colptr(0), x.colptr(0) + x.size(), qx.data());
     qy = QVector<double>(x.size());
 
+    // allow dragging and zoom
+    ui.plot->setInteraction(QCP::iRangeDrag, true);
+    ui.plot->setInteraction(QCP::iRangeZoom, true);
+
+
+    // get observable-specific options
     setup_observables();
 
     // add entries in dropdown-menu
@@ -92,13 +98,13 @@ void MainWindow::setup_observables() {
     using namespace std::string_literals;
 
     obs = std::vector<observable>(3);
-    obs[phi] = observable{"Potential", "x / nm", "phi / V", false, folder + "/phi.arma"s};
-    obs[n] = observable{"Charge density", "x / nm", "n / C m^{-3}", false, folder + "/n.arma"s};
+    obs[phi] = observable{"Potential", "x / nm", "psi / V", false, folder + "/phi.arma"s};
+    obs[n] = observable{"Charge density", "x / nm", "n / C m^-3", false, folder + "/n.arma"s};
     obs[I] = observable{"Current (spacial)", "x / nm", "I / A", false, folder + "/I.arma"s};
 }
 
 void MainWindow::update() {
-    int m = ui.scroll->value() * t.size() / 100;
+    int m = ui.scroll->value() * t.size() / (ui.scroll->maximum()+1);
     int s = ui.selection->currentIndex();
 
     // copy selected data from arma::mat to QVector
@@ -106,6 +112,14 @@ void MainWindow::update() {
     ui.plot->addGraph(); // seems like this needs to be done every time
     ui.plot->graph(0)->setData(qx, qy);
     ui.plot->replot();
+
+    // update the time-display
+    QString qs = "t = ";
+    QTextStream qts(&qs);
+    qts.setRealNumberNotation(QTextStream::FixedNotation);
+    qts.setRealNumberPrecision(5);
+    qts << t(m) * 1e12 << " ps";
+    ui.label->setText(qs);
 }
 
 void MainWindow::on_scroll_sliderMoved() {
