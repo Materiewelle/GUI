@@ -23,8 +23,8 @@ public:
     std::string folder;
     std::string file;
 
-    inline virtual void configure_plot(QCustomPlot * qcp) = 0;
-    inline virtual void update_plot(QCustomPlot * qcp, int m = 0) = 0;
+    virtual void configure_plot(QCustomPlot * qcp) = 0;
+    virtual void update_plot(QCustomPlot * qcp, int m = 0) = 0;
 
     inline observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_) :
         title(title_), xlabel(xlabel_), ylabel(ylabel_), folder(folder_), file(file_) {
@@ -122,7 +122,7 @@ folder(datafolder) {
     setup_observables();
 
     // add entries in dropdown-menu
-    for (int i = 0; i < obs.size(); ++i) {
+    for (unsigned i = 0; i < obs.size(); ++i) {
         ui.selection->addItem(obs[i]->title);
     }
     ui.selection->setCurrentIndex(0); // implied update()
@@ -132,9 +132,9 @@ void MainWindow::setup_observables() {
     using namespace std;
 
 //    obs.push_back(bandstructure_observable{"Potential", "x / nm", "psi / V", folder, "phi.arma"s});
-    obs.push_back(unique_ptr<observable>(new single_moving_graph_observable("Potential", "x / nm", "psi / V", folder, "phi.arma")));
-    obs.push_back(unique_ptr<observable>(new single_moving_graph_observable("Charge density", "x / nm", "n / C m^-3", folder, "n.arma")));
-    obs.push_back(unique_ptr<observable>(new single_moving_graph_observable("Current (spacial)", "x / nm", "I / A", folder, "I.arma")));
+    obs.push_back(make_unique<single_moving_graph_observable>("Potential", "x / nm", "psi / V", folder, "phi.arma"));
+    obs.push_back(make_unique<single_moving_graph_observable>("Charge density", "x / nm", "n / C m^-3", folder, "n.arma"));
+    obs.push_back(make_unique<single_moving_graph_observable>("Current (spacial)", "x / nm", "I / A", folder, "I.arma"));
 }
 
 void MainWindow::update() {
