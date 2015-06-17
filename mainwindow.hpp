@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <memory>
 
 #include <qcustomplot.hpp>
 #include "ui_mainwindow.h" // created at compiletime
@@ -84,6 +85,12 @@ class MainWindow : public QMainWindow
 public:
     inline MainWindow(const std::string folder);
 
+//    inline ~MainWindow() {
+//        for (int i = 0; i < obs.size(); ++i) {
+//            delete obs[i];
+//        }
+//    }
+
 private slots:
     inline void on_scroll_sliderMoved();
     inline void on_selection_currentIndexChanged(int index);
@@ -93,7 +100,7 @@ private:
     std::string folder;
 //    device d;
     arma::vec t;
-    std::vector<single_moving_graph_observable> obs;
+    std::vector<std::unique_ptr<observable>> obs;
 
     inline void update();
     inline void setup_observables();
@@ -116,17 +123,18 @@ folder(datafolder) {
 
     // add entries in dropdown-menu
     for (int i = 0; i < obs.size(); ++i) {
-        ui.selection->addItem(obs[i].title);
+        ui.selection->addItem(obs[i]->title);
     }
     ui.selection->setCurrentIndex(0); // implied update()
 }
 
-void MainWindow::setup_observables() {;
+void MainWindow::setup_observables() {
+    using namespace std;
 
 //    obs.push_back(bandstructure_observable{"Potential", "x / nm", "psi / V", folder, "phi.arma"s});
-    obs.push_back(single_moving_graph_observable{"Potential", "x / nm", "psi / V", folder, "phi.arma"});
-    obs.push_back(single_moving_graph_observable{"Charge density", "x / nm", "n / C m^-3", folder, "n.arma"});
-    obs.push_back(single_moving_graph_observable{"Current (spacial)", "x / nm", "I / A", folder, "I.arma"});
+    obs.push_back(unique_ptr<observable>(new single_moving_graph_observable("Potential", "x / nm", "psi / V", folder, "phi.arma")));
+    obs.push_back(unique_ptr<observable>(new single_moving_graph_observable("Charge density", "x / nm", "n / C m^-3", folder, "n.arma")));
+    obs.push_back(unique_ptr<observable>(new single_moving_graph_observable("Current (spacial)", "x / nm", "I / A", folder, "I.arma")));
 }
 
 void MainWindow::update() {
@@ -134,7 +142,7 @@ void MainWindow::update() {
     int s = ui.selection->currentIndex();
 
     // let the observable update the plot
-    obs[s].update_plot(ui.plot, m);
+    obs[s]->update_plot(ui.plot, m);
 
     // update the time-display
     QString qs = "t = ";
@@ -150,7 +158,7 @@ void MainWindow::on_scroll_sliderMoved() {
 }
 
 void MainWindow::on_selection_currentIndexChanged(int index) {
-    obs[index].configure_plot(ui.plot);
+    obs[index]->configure_plot(ui.plot);
     update();
 }
 
