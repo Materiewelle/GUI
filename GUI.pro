@@ -1,5 +1,8 @@
 QT += core gui widgets printsupport
 
+INCLUDEPATH += .
+DEPENDPATH += .
+
 TARGET = GUI
 TEMPLATE = app
 
