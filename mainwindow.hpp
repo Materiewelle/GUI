@@ -23,34 +23,33 @@ public:
     std::string folder;
     std::string file;
 
-    virtual void configure_plot(QCustomPlot * qcp) = 0;
-    virtual void update_plot(QCustomPlot * qcp, int m = 0) = 0;
-
-    inline observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_) :
-        title(title_), xlabel(xlabel_), ylabel(ylabel_), folder(folder_), file(file_) {
-    }
-};
-
-class moving_graph_observable : public observable {
-public:
     arma::mat data;
+
+    // the following are not initialized in the virtual class!
     arma::vec x;
     QVector<double> qx;
 
-    inline void configure_plot(QCustomPlot * qcp) override {
+    inline virtual void configure_plot(QCustomPlot * qcp) {
+        qcp->clearGraphs();
         qcp->xAxis->setLabel(xlabel);
         qcp->yAxis->setLabel(ylabel);
         double x0 = arma::min(arma::min(x));
         double x1 = arma::max(arma::max(x));
         qcp->xAxis->setRange(x0, x1);
-        double y0 = arma::min(arma::min(data));
-        double y1 = arma::max(arma::max(data));
-        qcp->yAxis->setRange(y0, y1);
     }
 
+    virtual void update_plot(QCustomPlot * qcp, int m = 0) = 0;
+
+    inline observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_) :
+        title(title_), xlabel(xlabel_), ylabel(ylabel_), folder(folder_), file(file_) {
+        data.load(folder + "/" + file);
+    }
+};
+
+class moving_graph_observable : public observable {
+public:
     inline moving_graph_observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_)
         : observable(title_, xlabel_, ylabel_, folder_, file_) {
-        data.load(folder + "/" + file);
         x.load(folder + "/xtics.arma");
         qx = QVector<double>(x.size());
         std::copy(x.colptr(0), x.colptr(0) + x.size(), qx.data());
@@ -61,10 +60,16 @@ class single_moving_graph_observable : public moving_graph_observable {
 public:
     QVector<double> qy;
 
-    inline void update_plot(QCustomPlot * qcp, int m = 0) override {
-        qcp->clearGraphs();
-        std::copy(data.colptr(m), data.colptr(m) + x.size(), qy.data());
+    inline void configure_plot(QCustomPlot * qcp) override {
+        observable::configure_plot(qcp);
+        double y0 = arma::min(arma::min(data));
+        double y1 = arma::max(arma::max(data));
+        qcp->yAxis->setRange(y0, y1);
         qcp->addGraph();
+    }
+
+    inline void update_plot(QCustomPlot * qcp, int m = 0) override {
+        std::copy(data.colptr(m), data.colptr(m) + x.size(), qy.data());
         qcp->graph(0)->setData(qx, qy);
         qcp->replot();
     }
@@ -80,18 +85,23 @@ public:
     const device & d;
     QVector<double> qc, qv;
 
-    inline void update_plot(QCustomPlot * qcp, int m = 0) override {
-        qcp->clearGraphs();
+    inline void configure_plot(QCustomPlot * qcp) override {
+        moving_graph_observable::configure_plot(qcp);
+        double y0 = arma::min(arma::min(data)) - d.E_g / 2;
+        double y1 = arma::max(arma::max(data)) + d.E_g / 2;
+        qcp->yAxis->setRange(y0, y1);
+        qcp->addGraph();
+        qcp->addGraph();
+    }
 
+    inline void update_plot(QCustomPlot * qcp, int m = 0) override {
         arma::vec tmp_c = data.col(m) + d.E_g / 2;
         std::copy(tmp_c.memptr(), tmp_c.memptr() + x.size(), qc.data());
-        qcp->addGraph();
-        qcp->graph()->setData(qx, qc);
+        qcp->graph(0)->setData(qx, qc);
 
         arma::vec tmp_v = data.col(m) - d.E_g / 2;
         std::copy(tmp_v.memptr(), tmp_v.memptr() + x.size(), qv.data());
-        qcp->addGraph();
-        qcp->graph()->setData(qx, qv);
+        qcp->graph(1)->setData(qx, qv);
 
         qcp->replot();
     }
@@ -103,9 +113,53 @@ public:
     }
 };
 
-//class static_graph_observable : public observable {
+class static_graph_observable : public observable {
+public:
+    inline static_graph_observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_)
+        : observable(title_, xlabel_, ylabel_, folder_, file_) {
+        x.load(folder + "/ttics.arma");
+        qx = QVector<double>(x.size());
+        std::copy(x.colptr(0), x.colptr(0) + x.size(), qx.data());
+    }
+};
 
-//};
+class single_static_graph_observable : public static_graph_observable {
+public:
+    arma::vec y;
+    QVector<double> qy;
+    std::unique_ptr<QCPItemTracer> tracer;
+
+    inline void configure_plot(QCustomPlot * qcp) override {
+        observable::configure_plot(qcp);
+        double y0 = arma::min(y);
+        double y1 = arma::max(y);
+        qcp->yAxis->setRange(y0, y1);
+        qcp->addGraph();
+        qcp->graph(0)->addData(qx, qy);
+
+        tracer = std::make_unique<QCPItemTracer>(qcp);
+        qcp->addItem(tracer.get());
+        tracer->setGraph(qcp->graph(0));
+        tracer->setGraphKey(qx[0]);
+        tracer->setInterpolating(true);
+        tracer->setStyle(QCPItemTracer::tsCircle);
+        tracer->setPen(QPen(Qt::red));
+        tracer->setBrush(Qt::red);
+        tracer->setSize(7);
+    }
+
+    inline void update_plot(QCustomPlot * qcp, int m = 0) override {
+        tracer->setGraphKey(qx[m]);
+        qcp->replot();
+    }
+
+    inline single_static_graph_observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_)
+        : static_graph_observable(title_, xlabel_, ylabel_, folder_, file_) {
+        y = data.col(1);
+        qy = QVector<double>(x.size());
+        std::copy(y.memptr(), y.memptr() + x.size(), qy.data());
+    }
+};
 
 class MainWindow : public QMainWindow
 {
@@ -159,10 +213,11 @@ MainWindow::MainWindow(std::string datafolder)
 void MainWindow::setup_observables() {
     using namespace std;
 
-    obs.push_back(make_unique<bandstructure_observable>("Bandstructure", "x / nm", "psi / V", folder, "phi.arma"s, d));
-    obs.push_back(make_unique<single_moving_graph_observable>("Potential", "x / nm", "psi / V", folder, "phi.arma"));
+    obs.push_back(make_unique<bandstructure_observable>("Bandstructure", "x / nm", "phi / V", folder, "phi.arma"s, d));
+//    obs.push_back(make_unique<single_moving_graph_observable>("Potential", "x / nm", "E_c, E_v / V", folder, "phi.arma"));
     obs.push_back(make_unique<single_moving_graph_observable>("Charge density", "x / nm", "n / C m^-3", folder, "n.arma"));
     obs.push_back(make_unique<single_moving_graph_observable>("Current (spacial)", "x / nm", "I / A", folder, "I.arma"));
+    obs.push_back(make_unique<single_static_graph_observable>("Gate voltage", "t / s", "V_d / V", folder, "V.arma"));
 }
 
 void MainWindow::update() {

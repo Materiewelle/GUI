@@ -2,13 +2,14 @@
 #include <string>
 #include <iostream>
 #include <QDir>
+#include <armadillo>
 
 #include "mainwindow.hpp"
 #include "qcustomplot.hpp"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
-    MainWindow w("/home/tobias/test");
+    MainWindow w("/home/fabian/ScieBo/Results/time_evolution_observables/tfet_gate");
     w.show();
     return a.exec();
 
