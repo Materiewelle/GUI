@@ -4,10 +4,12 @@ TARGET = GUI
 TEMPLATE = app
 
 SOURCES += main.cpp \
-           qcustomplot.cpp
+    qcustomplot.cpp
 
 HEADERS += mainwindow.hpp \
-           qcustomplot.hpp
+    qcustomplot.hpp \
+    constant.hpp \
+    device.hpp
 
 FORMS += mainwindow.ui
 

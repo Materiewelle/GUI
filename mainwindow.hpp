@@ -11,12 +11,7 @@
 
 #include <qcustomplot.hpp>
 #include "ui_mainwindow.h" // created at compiletime
-
-enum {
-    phi = 0,
-    n = 1,
-    I = 2
-};
+//#include "device.hpp"
 
 class observable {
 public:
@@ -24,19 +19,62 @@ public:
     QString xlabel;
     QString ylabel;
 
-    bool logscale;
+    std::string folder;
+    std::string file;
 
-    std::string filename;
-    arma::mat data;
+    inline virtual void configure_plot(QCustomPlot * qcp) = 0;
+    inline virtual void update_plot(QCustomPlot * qcp, int m = 0) = 0;
 
-    inline observable() {
-    }
-
-    inline observable(QString _title, QString _xlabel, QString _ylabel, bool _logscale, std::string _filename) :
-        title(_title), xlabel(_xlabel), ylabel(_ylabel), logscale(_logscale), filename(_filename) {
-        data.load(filename);
+    inline observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_) :
+        title(title_), xlabel(xlabel_), ylabel(ylabel_), folder(folder_), file(file_) {
     }
 };
+
+class moving_graph_observable : public observable {
+public:
+    arma::mat data;
+    arma::vec x;
+    QVector<double> qx;
+
+    inline void configure_plot(QCustomPlot * qcp) {
+        qcp->xAxis->setLabel(xlabel);
+        qcp->yAxis->setLabel(ylabel);
+        double x0 = arma::min(arma::min(x));
+        double x1 = arma::max(arma::max(x));
+        qcp->xAxis->setRange(x0, x1);
+        double y0 = arma::min(arma::min(data));
+        double y1 = arma::max(arma::max(data));
+        qcp->yAxis->setRange(y0, y1);
+    }
+
+    inline moving_graph_observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_)
+        : observable(title_, xlabel_, ylabel_, folder_, file_) {
+        data.load(folder + "/" + file);
+        x.load(folder + "/xtics.arma");
+        qx = QVector<double>(x.size());
+        std::copy(x.colptr(0), x.colptr(0) + x.size(), qx.data());
+    }
+};
+
+class single_moving_graph_observable : public moving_graph_observable {
+public:
+    QVector<double> qy;
+
+    inline void update_plot(QCustomPlot * qcp, int m = 0) {
+        std::copy(data.colptr(m), data.colptr(m) + x.size(), qy.data());
+        qcp->addGraph();
+        qcp->graph(0)->setData(qx, qy);
+        qcp->replot();
+    }
+
+    inline single_moving_graph_observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_)
+        : moving_graph_observable(title_, xlabel_, ylabel_, folder_, file_) {
+    }
+};
+
+//class static_graph_observable : public observable {
+
+//};
 
 class MainWindow : public QMainWindow
 {
@@ -45,73 +83,57 @@ class MainWindow : public QMainWindow
 public:
     inline MainWindow(const std::string folder);
 
-    inline void setup_observables();
-    inline void update();
-
-    std::vector<observable> obs;
-
-    arma::vec x, t;
-    QVector<double> qx, qy;
-
 private slots:
     inline void on_scroll_sliderMoved();
     inline void on_selection_currentIndexChanged(int index);
 
 private:
     Ui::MainWindow ui;
-    const std::string folder;
+    std::string folder;
+//    device d;
+    arma::vec t;
+    std::vector<single_moving_graph_observable> obs;
+
+    inline void update();
+    inline void setup_observables();
 };
 
-MainWindow::MainWindow(const std::string datafolder) :
+MainWindow::MainWindow(std::string datafolder) :
 folder(datafolder) {
     using namespace std::string_literals;
 
+    t.load(folder + "/ttics.arma"s);
+
     ui.setupUi(this);
     setWindowTitle("Time dependent observables");
-
-    x.load(folder + "/xtics.arma"s);
-    t.load(folder + "/ttics.arma"s);
-    double x0 = arma::min(x);
-    double x1 = arma::max(x);
-    ui.plot->xAxis->setRange(x0, x1);
-
-    qx = QVector<double>(x.size());
-    std::copy(x.colptr(0), x.colptr(0) + x.size(), qx.data());
-    qy = QVector<double>(x.size());
 
     // allow dragging and zoom
     ui.plot->setInteraction(QCP::iRangeDrag, true);
     ui.plot->setInteraction(QCP::iRangeZoom, true);
 
-
-    // get observable-specific options
     setup_observables();
 
     // add entries in dropdown-menu
-    for (auto it = obs.begin(); it != obs.end(); ++it) {
-        ui.selection->addItem(it->title);
+    for (int i = 0; i < obs.size(); ++i) {
+        ui.selection->addItem(obs[i].title);
     }
     ui.selection->setCurrentIndex(0); // implied update()
 }
 
-void MainWindow::setup_observables() {
-    using namespace std::string_literals;
+void MainWindow::setup_observables() {;
 
-    obs = std::vector<observable>(3);
-    obs[phi] = observable{"Potential", "x / nm", "psi / V", false, folder + "/phi.arma"s};
-    obs[n] = observable{"Charge density", "x / nm", "n / C m^-3", false, folder + "/n.arma"s};
-    obs[I] = observable{"Current (spacial)", "x / nm", "I / A", false, folder + "/I.arma"s};
+//    obs.push_back(bandstructure_observable{"Potential", "x / nm", "psi / V", folder, "phi.arma"s});
+    obs.push_back(single_moving_graph_observable{"Potential", "x / nm", "psi / V", folder, "phi.arma"});
+    obs.push_back(single_moving_graph_observable{"Charge density", "x / nm", "n / C m^-3", folder, "n.arma"});
+    obs.push_back(single_moving_graph_observable{"Current (spacial)", "x / nm", "I / A", folder, "I.arma"});
 }
 
 void MainWindow::update() {
-    int m = ui.scroll->value() * t.size() / (ui.scroll->maximum()+1);
+    int m = ui.scroll->value() * t.size() / (ui.scroll->maximum() + 1);
     int s = ui.selection->currentIndex();
 
-    // copy selected data from arma::mat to QVector
-    std::copy(obs[s].data.colptr(m), obs[s].data.colptr(m) + x.size(), qy.data());
-    ui.plot->addGraph(); // seems like this needs to be done every time
-    ui.plot->graph(0)->setData(qx, qy);
-    ui.plot->replot();
+    // let the observable update the plot
+    obs[s].update_plot(ui.plot, m);
 
     // update the time-display
     QString qs = "t = ";
@@ -127,21 +149,7 @@ void MainWindow::on_scroll_sliderMoved() {
 }
 
 void MainWindow::on_selection_currentIndexChanged(int index) {
-    ui.plot->xAxis->setLabel(obs[index].xlabel);
-    ui.plot->yAxis->setLabel(obs[index].ylabel);
-
-    double y0 = arma::min(arma::min(obs[index].data));
-    double y1 = arma::max(arma::max(obs[index].data));
-
-    if (obs[index].logscale) {
-        ui.plot->yAxis->setScaleType(QCPAxis::stLogarithmic);
-        y0 = std::log10(y0);
-        y1 = std::log10(y1);
-    } else {
-        ui.plot->yAxis->setScaleType(QCPAxis::stLinear);
-    }
-    ui.plot->yAxis->setRange(y0, y1);
-
+    obs[index].configure_plot(ui.plot);
     update();
 }
 
