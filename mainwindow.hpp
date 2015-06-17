@@ -37,7 +37,7 @@ public:
     arma::vec x;
     QVector<double> qx;
 
-    inline void configure_plot(QCustomPlot * qcp) {
+    inline void configure_plot(QCustomPlot * qcp) override {
         qcp->xAxis->setLabel(xlabel);
         qcp->yAxis->setLabel(ylabel);
         double x0 = arma::min(arma::min(x));
@@ -61,7 +61,8 @@ class single_moving_graph_observable : public moving_graph_observable {
 public:
     QVector<double> qy;
 
-    inline void update_plot(QCustomPlot * qcp, int m = 0) {
+    inline void update_plot(QCustomPlot * qcp, int m = 0) override {
+        qcp->clearGraphs();
         std::copy(data.colptr(m), data.colptr(m) + x.size(), qy.data());
         qcp->addGraph();
         qcp->graph(0)->setData(qx, qy);
@@ -71,6 +72,34 @@ public:
     inline single_moving_graph_observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_)
         : moving_graph_observable(title_, xlabel_, ylabel_, folder_, file_) {
         qy = QVector<double>(x.size());
+    }
+};
+
+class bandstructure_observable : public moving_graph_observable {
+public:
+    const device & d;
+    QVector<double> qc, qv;
+
+    inline void update_plot(QCustomPlot * qcp, int m = 0) override {
+        qcp->clearGraphs();
+
+        arma::vec tmp_c = data.col(m) + d.E_g / 2;
+        std::copy(tmp_c.memptr(), tmp_c.memptr() + x.size(), qc.data());
+        qcp->addGraph();
+        qcp->graph()->setData(qx, qc);
+
+        arma::vec tmp_v = data.col(m) - d.E_g / 2;
+        std::copy(tmp_v.memptr(), tmp_v.memptr() + x.size(), qv.data());
+        qcp->addGraph();
+        qcp->graph()->setData(qx, qv);
+
+        qcp->replot();
+    }
+
+    inline bandstructure_observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_, const device & d_)
+        : moving_graph_observable(title_, xlabel_, ylabel_, folder_, file_), d(d_) {
+        qc = QVector<double>(x.size());
+        qv = QVector<double>(x.size());
     }
 };
 
@@ -125,7 +154,7 @@ folder(datafolder) , d(folder + "/device.ini"){
 void MainWindow::setup_observables() {
     using namespace std;
 
-//    obs.push_back(bandstructure_observable{"Potential", "x / nm", "psi / V", folder, "phi.arma"s});
+    obs.push_back(make_unique<bandstructure_observable>("Bandstructure", "x / nm", "psi / V", folder, "phi.arma"s, d));
     obs.push_back(make_unique<single_moving_graph_observable>("Potential", "x / nm", "psi / V", folder, "phi.arma"));
     obs.push_back(make_unique<single_moving_graph_observable>("Charge density", "x / nm", "n / C m^-3", folder, "n.arma"));
     obs.push_back(make_unique<single_moving_graph_observable>("Current (spacial)", "x / nm", "I / A", folder, "I.arma"));
