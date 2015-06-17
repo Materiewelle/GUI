@@ -129,9 +129,14 @@ private:
     inline void setup_observables();
 };
 
-MainWindow::MainWindow(std::string datafolder) :
-folder(datafolder) , d(folder + "/device.ini"){
+MainWindow::MainWindow(std::string datafolder)
+    : folder(datafolder) {
     using namespace std::string_literals;
+
+    std::ifstream device_params(folder + "/device.ini");
+    std::string device_string((std::istreambuf_iterator<char>(device_params)),
+                               std::istreambuf_iterator<char>());
+    d = device(device_string);
 
     t.load(folder + "/ttics.arma"s);
 
