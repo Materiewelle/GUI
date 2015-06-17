@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
-    MainWindow w("/home/fabian/Master_Thesis/Code/build/GUI/Debug/testdata");
+    MainWindow w("/home/tobias/test");
     w.show();
     return a.exec();
 

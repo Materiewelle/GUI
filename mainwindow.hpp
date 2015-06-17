@@ -69,6 +69,7 @@ public:
 
     inline single_moving_graph_observable(QString title_, QString xlabel_, QString ylabel_, std::string folder_, std::string file_)
         : moving_graph_observable(title_, xlabel_, ylabel_, folder_, file_) {
+        qy = QVector<double>(x.size());
     }
 };
 
