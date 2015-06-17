@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
-    MainWindow w("/home/tobias/test");
+    MainWindow w("/home/fabian/ScieBo/Results/time_evolution_observables/tobi_obelix");
     w.show();
     return a.exec();
 

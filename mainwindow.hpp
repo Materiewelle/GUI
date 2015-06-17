@@ -12,7 +12,7 @@
 
 #include <qcustomplot.hpp>
 #include "ui_mainwindow.h" // created at compiletime
-//#include "device.hpp"
+#include "device.hpp"
 
 class observable {
 public:
@@ -85,12 +85,6 @@ class MainWindow : public QMainWindow
 public:
     inline MainWindow(const std::string folder);
 
-//    inline ~MainWindow() {
-//        for (int i = 0; i < obs.size(); ++i) {
-//            delete obs[i];
-//        }
-//    }
-
 private slots:
     inline void on_scroll_sliderMoved();
     inline void on_selection_currentIndexChanged(int index);
@@ -98,7 +92,7 @@ private slots:
 private:
     Ui::MainWindow ui;
     std::string folder;
-//    device d;
+    device d;
     arma::vec t;
     std::vector<std::unique_ptr<observable>> obs;
 
@@ -107,7 +101,7 @@ private:
 };
 
 MainWindow::MainWindow(std::string datafolder) :
-folder(datafolder) {
+folder(datafolder) , d(folder + "/device.ini"){
     using namespace std::string_literals;
 
     t.load(folder + "/ttics.arma"s);
