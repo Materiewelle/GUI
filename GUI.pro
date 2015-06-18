@@ -12,9 +12,11 @@ SOURCES += main.cpp \
 HEADERS += mainwindow.hpp \
     qcustomplot.hpp \
     constant.hpp \
-    device.hpp
+    device.hpp \
+    observable.hpp \
+    graph_data.hpp
 
-FORMS += mainwindow.ui
+FORMS +=
 
 #LIBS += -lqcustomplot
 
