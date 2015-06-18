@@ -4,10 +4,18 @@
 #include <armadillo>
 #include <QVector>
 #include <QString>
+#include <QColor>
 #include <iostream>
 
 #include "graph_data.hpp"
 #include "qcustomplot.hpp"
+
+static const QVector<QColor> RWTH_Colors = {
+    {0, 84, 159},  // blau
+    {204, 7, 30},  // rot
+    {97, 33, 88},  // violett
+    {87, 171, 39}  // gruen
+};
 
 class observable {
 public:
@@ -57,6 +65,8 @@ void xobservable::setup(QCustomPlot & qcp) {
     double global_max = -1e200;
     for (int i = 0; i < data.size(); ++i) {
         qcp.addGraph();
+        qcp.graph(i)->setName(data[i].title);
+        qcp.graph(i)->setPen(QPen(RWTH_Colors[i]));
         global_min = (global_min < data[i].min) ? global_min : data[i].min;
         global_max = (global_max > data[i].max) ? global_max : data[i].max;
     }
@@ -108,6 +118,8 @@ void tobservable::setup(QCustomPlot & qcp) {
     double global_max = -1e200;
     for (int i = 0; i < data.size(); ++i) {
         qcp.addGraph();
+        qcp.graph(i)->setName(data[i].title);
+        qcp.graph(i)->setPen(QPen(RWTH_Colors[i]));
         global_min = (global_min < data[i].min) ? global_min : data[i].min;
         global_max = (global_max > data[i].max) ? global_max : data[i].max;
 

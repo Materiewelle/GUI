@@ -67,6 +67,10 @@ main_window::main_window(QWidget * parent)
     plot.setInteraction(QCP::iRangeDrag, true);
     plot.setInteraction(QCP::iRangeZoom, true);
 
+    plot.legend->setVisible(true);
+    plot.legend->setBrush(QBrush(QColor(255,255,255,130))); //transparent white
+    plot.axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignTop|Qt::AlignRight);
+
     time_scrollbar.setOrientation(Qt::Horizontal);
     time_scrollbar.setTracking(true);
     time_scrollbar.setRange(0, 9999);
