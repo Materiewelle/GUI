@@ -9,12 +9,13 @@ TEMPLATE = app
 SOURCES += main.cpp \
     qcustomplot.cpp
 
-HEADERS += mainwindow.hpp \
+HEADERS += \
     qcustomplot.hpp \
     constant.hpp \
     device.hpp \
     observable.hpp \
-    graph_data.hpp
+    graph_data.hpp \
+    main_window.hpp
 
 FORMS +=
 
