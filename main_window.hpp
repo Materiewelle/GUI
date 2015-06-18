@@ -209,6 +209,42 @@ void main_window::load_data() {
         xobservable * current = new xobservable("Current (spatial)", "I / A", x, t);
         current->add_data({ "Current", I, Imin, Imax });
         observables.push_back(std::move(std::unique_ptr<observable>(current)));
+
+        QVector<double> I_s(I.size());
+        QVector<double> I_d(I.size());
+        double Ismin = Imax, Ismax = Imin, Idmin = Imax, Idmax = Imin;
+        for (int i = 0; i < I.size(); ++i) {
+            I_s[i] = I[i][0];
+            I_d[i] = I[i][I[i].size() - 1];
+            if (I_s[i] < Ismin) {
+                Ismin = I_s[i];
+            }
+            if (I_s[i] > Ismax) {
+                Ismax = I_s[i];
+            }
+            if (I_d[i] < Idmin) {
+                Idmin = I_d[i];
+            }
+            if (I_d[i] > Idmax) {
+                Idmax = I_d[i];
+            }
+        }
+
+        double delta = Ismax - Ismin;
+        Ismin = Ismin - delta * 0.05;
+        Ismax = Ismax + delta * 0.05;
+
+        delta = Idmax - Idmin;
+        Idmin = Idmin - delta * 0.05;
+        Idmax = Idmax + delta * 0.05;
+
+        tobservable * current_s = new tobservable("Source Current", "I / A", x, t);
+        current_s->add_data({ "Source Current", I_s, Ismin, Ismax });
+        observables.push_back(std::move(std::unique_ptr<observable>(current_s)));
+
+        tobservable * current_d = new tobservable("Drain Current", "I / A", x, t);
+        current_d->add_data({ "Drain Current", I_d, Idmin, Idmax });
+        observables.push_back(std::move(std::unique_ptr<observable>(current_d)));
     }
 
     // load V.arma
