@@ -263,11 +263,11 @@ void QCPPainter::makeNonCosmetic()
   \section QCPScatterStyle-defining Specifying a scatter style
 
   You can set all these configurations either by calling the respective functions on an instance:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpscatterstyle-creation-1
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotscatterstyle-creation-1
 
   Or you can use one of the various constructors that take different parameter combinations, making
   it easy to specify a scatter style in a single call, like so:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpscatterstyle-creation-2
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotscatterstyle-creation-2
 
   \section QCPScatterStyle-undefinedpen Leaving the color/pen up to the plottable
 
@@ -278,7 +278,7 @@ void QCPPainter::makeNonCosmetic()
   color of the graph (\ref QCPGraph::setPen) will be used by the scatter points. This makes
   it very convenient to set up typical scatter settings:
 
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpscatterstyle-shortcreation
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotscatterstyle-shortcreation
 
   Notice that it wasn't even necessary to explicitly call a QCPScatterStyle constructor. This works
   because QCPScatterStyle provides a constructor that can transform a \ref ScatterShape directly
@@ -1520,9 +1520,9 @@ bool QCPRange::validRange(const QCPRange &range)
   \section QCPMarginGroup-example Example
 
   First create a margin group:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpmargingroup-creation-1
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotmargingroup-creation-1
   Then set this group on the layout element sides:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpmargingroup-creation-2
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotmargingroup-creation-2
   Here, we've used the first two axis rects of the plot and synchronized their left margins with
   each other and their right margins with each other.
 */
@@ -3378,7 +3378,7 @@ void QCPLayoutInset::addElement(QCPLayoutElement *element, const QRectF &rect)
 
   Note that due to the overloaded QCPLineEnding constructor, you may directly specify a
   QCPLineEnding::EndingStyle where actually a QCPLineEnding is expected, e.g.
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcplineending-sethead
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotlineending-sethead
 */
 
 /*!
@@ -8209,17 +8209,17 @@ void QCPItemPosition::setPixelPoint(const QPointF &pixelPoint)
   \section items-using Using items
 
   First you instantiate the item you want to use and add it to the plot:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpitemline-creation-1
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotitemline-creation-1
   by default, the positions of the item are bound to the x- and y-Axis of the plot. So we can just
   set the plot coordinates where the line should start/end:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpitemline-creation-2
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotitemline-creation-2
   If we don't want the line to be positioned in plot coordinates but a different coordinate system,
   e.g. absolute pixel positions on the QCustomPlot surface, we need to change the position type like this:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpitemline-creation-3
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotitemline-creation-3
   Then we can set the coordinates, this time in pixels:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpitemline-creation-4
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotitemline-creation-4
   and make the line visible on the entire QCustomPlot, by disabling clipping to the axis rect:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpitemline-creation-5
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotitemline-creation-5
 
   For more advanced plots, it is even possible to set different types and parent anchors per X/Y
   coordinate of an item position, using for example \ref QCPItemPosition::setTypeX or \ref
@@ -11156,7 +11156,7 @@ void QCustomPlot::toPainter(QCPPainter *painter, int width, int height)
   The fact that the \ref QCPColorGradient(GradientPreset preset) constructor allows directly
   converting a \ref GradientPreset to a QCPColorGradient, you can also directly pass \ref
   GradientPreset to all the \a setGradient methods, e.g.:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpcolorgradient-setgradient
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotcolorgradient-setgradient
 
   The total number of levels used in the gradient can be set with \ref setLevelCount. Whether the
   color gradient shall be applied periodically (wrapping around) to data values that lie outside
@@ -13479,7 +13479,7 @@ void QCPLegend::parentPlotInitialized(QCustomPlot *parentPlot)
   and \ref setTextColor.
 
   A plot title can be added as follows:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpplottitle-creation
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotplottitle-creation
 
   Since a plot title is a common requirement, QCustomPlot offers specialized selection signals for
   easy interaction with QCPPlotTitle. If a layout element of type QCPPlotTitle is clicked, the
@@ -13738,17 +13738,17 @@ QColor QCPPlotTitle::mainTextColor() const
   To have finer control over the number display and axis behaviour, you can directly access the
   \ref axis. See the documentation of QCPAxis for details about configuring axes. For example, if
   you want to change the number of automatically generated ticks, call
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpcolorscale-autotickcount
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotcolorscale-autotickcount
 
   Placing a color scale next to the main axis rect works like with any other layout element:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpcolorscale-creation
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotcolorscale-creation
   In this case we have placed it to the right of the default axis rect, so it wasn't necessary to
   call \ref setType, since \ref QCPAxis::atRight is already the default. The text next to the color
   scale can be set with \ref setLabel.
 
   For optimum appearance (like in the image above), it may be desirable to line up the axis rect and
   the borders of the color scale. Use a \ref QCPMarginGroup to achieve this:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpcolorscale-margingroup
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotcolorscale-margingroup
 
   Color scales are initialized with a non-zero minimum top and bottom margin (\ref
   setMinimumMargins), because vertical color scales are most common and the minimum top/bottom
@@ -16783,9 +16783,9 @@ QCPCurveData::QCPCurveData(double t, double key, double value) :
   the plottable-interface of QCustomPlot applies (QCustomPlot::plottable, QCustomPlot::addPlottable, QCustomPlot::removePlottable, etc.)
 
   Usually, you first create an instance and add it to the customPlot:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpcurve-creation-1
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotcurve-creation-1
   and then modify the properties of the newly created plottable, e.g.:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpcurve-creation-2
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotcurve-creation-2
 */
 
 /*!
@@ -18014,11 +18014,11 @@ QCPRange QCPCurve::getValueRange(bool &foundRange, SignDomain inSignDomain) cons
   plottables to a QCPBarsGroup achieves. (An alternative approach is to stack them on top of each
   other, see \ref QCPBars::moveAbove.)
 
-  \section qcpbarsgroup-usage Usage
+  \section plotbarsgroup-usage Usage
 
   To add a QCPBars plottable to the group, create a new group and then add the respective bars
   intances:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpbarsgroup-creation
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotbarsgroup-creation
   Alternatively to appending to the group like shown above, you can also set the group on the
   QCPBars plottable via \ref QCPBars::setBarsGroup.
 
@@ -18032,10 +18032,10 @@ QCPRange QCPCurve::getValueRange(bool &foundRange, SignDomain inSignDomain) cons
 
   To clear the entire group, call \ref clear, or simply delete the group.
 
-  \section qcpbarsgroup-example Example
+  \section plotbarsgroup-example Example
 
   The image above is generated with the following code:
-  \snippet documentation/doc-image-generator/mainwindow.cpp qcpbarsgroup-example
+  \snippet documentation/doc-image-generator/mainwindow.cpp plotbarsgroup-example
 */
 
 /* start of documentation of inline functions */
@@ -18407,11 +18407,11 @@ QCPBarData::QCPBarData(double key, double value) :
   (QCustomPlot::plottable, QCustomPlot::addPlottable, QCustomPlot::removePlottable, etc.)
 
   Usually, you first create an instance:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpbars-creation-1
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotbars-creation-1
   add it to the customPlot with QCustomPlot::addPlottable:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpbars-creation-2
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotbars-creation-2
   and then modify the properties of the newly created plottable, e.g.:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpbars-creation-3
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotbars-creation-3
 */
 
 /* start of documentation of inline functions */
@@ -19159,9 +19159,9 @@ QCPRange QCPBars::getValueRange(bool &foundRange, SignDomain inSignDomain) const
 
   Like all data representing objects in QCustomPlot, the QCPStatisticalBox is a plottable.
   Usually, you first create an instance and add it to the customPlot:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpstatisticalbox-creation-1
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotstatisticalbox-creation-1
   and then modify the properties of the newly created plottable, e.g.:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpstatisticalbox-creation-2
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotstatisticalbox-creation-2
 */
 
 /*!
@@ -20010,9 +20010,9 @@ void QCPColorMapData::cellToCoord(int keyIndex, int valueIndex, double *key, dou
   (QCustomPlot::plottable, QCustomPlot::addPlottable, QCustomPlot::removePlottable, etc.)
 
   Usually, you first create an instance and add it to the customPlot:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpcolormap-creation-1
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotcolormap-creation-1
   and then modify the properties of the newly created color map, e.g.:
-  \snippet documentation/doc-code-snippets/mainwindow.cpp qcpcolormap-creation-2
+  \snippet documentation/doc-code-snippets/mainwindow.cpp plotcolormap-creation-2
 
   \note The QCPColorMap always displays the data at equal key/value intervals, even if the key or
   value axis is set to a logarithmic scaling. If you want to use QCPColorMap with logarithmic axes,
