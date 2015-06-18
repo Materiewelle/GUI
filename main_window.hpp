@@ -3,6 +3,7 @@
 
 #include <armadillo>
 #include <memory>
+#include <vector>
 
 #include <QComboBox>
 #include <QFile>
@@ -15,6 +16,7 @@
 
 #include "device.hpp"
 #include "qcustomplot.hpp"
+#include "observable.hpp"
 
 class main_window : public QWidget
 {
@@ -41,13 +43,13 @@ private:
 
     int time_index;
 
-    QVector<std::unique_ptr<observable>> observables;
+    std::vector<std::unique_ptr<observable>> observables;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 main_window::main_window(QWidget * parent)
-    : QWidget(parent) {
+    : QWidget(parent), time_index(0) {
 
     resize(800, 600);
 
@@ -61,6 +63,9 @@ main_window::main_window(QWidget * parent)
     open_button.setText("Open Directory");
 
     selection_box.setEnabled(false);
+
+    plot.setInteraction(QCP::iRangeDrag, true);
+    plot.setInteraction(QCP::iRangeZoom, true);
 
     time_scrollbar.setOrientation(Qt::Horizontal);
     time_scrollbar.setTracking(true);
@@ -104,6 +109,9 @@ void main_window::load_data() {
 
         min = av.min();
         max = av.max();
+        double delta = max - min;
+        min = min - delta * 0.05;
+        max = max + delta * 0.05;
 
         vec = QVector<double>(av.size());
         std::copy(av.memptr(), av.memptr() + av.size(), vec.data());
@@ -119,6 +127,9 @@ void main_window::load_data() {
 
         min = am.min();
         max = am.max();
+        double delta = max - min;
+        min = min - delta * 0.05;
+        max = max + delta * 0.05;
 
         mat = QVector<QVector<double>>(am.n_cols);
 
@@ -150,7 +161,7 @@ void main_window::load_data() {
         double vbandmin = phimin - 0.5 * (std::max(d.E_gc, d.E_g));
         double vbandmax = phimax - 0.5 * (std::min(d.E_gc, d.E_g));
         double cbandmin = phimin + 0.5 * (std::min(d.E_gc, d.E_g));
-        double cbandmax = phimin + 0.5 * (std::max(d.E_gc, d.E_g));
+        double cbandmax = phimax + 0.5 * (std::max(d.E_gc, d.E_g));
 
         bool ok = true;
         for (int i = 0; i < phi.size(); ++i) {
@@ -178,7 +189,7 @@ void main_window::load_data() {
             xobservable * bandstructure = new xobservable("Bandstructure", "phi / V", x, t);
             bandstructure->add_data({ "Valence Band", vband, vbandmin, vbandmax });
             bandstructure->add_data({ "Conduction Band", cband, cbandmin, cbandmax });
-            observables.push_back(std::unique_ptr<observable>(bandstructure));
+            observables.push_back(std::move(std::unique_ptr<xobservable>(bandstructure)));
         }
     }
 
@@ -188,7 +199,7 @@ void main_window::load_data() {
     if (load_2D(dir + "/n.arma", n, nmin, nmax)) {
         xobservable * charge_density = new xobservable("Charge density", "n / C m^-3", x, t);
         charge_density->add_data({ "Charge density", n, nmin, nmax });
-        observables.push_back(std::unique_ptr<observable>(charge_density));
+        observables.push_back(std::move(std::unique_ptr<observable>(charge_density)));
     }
 
     // load I.arma
@@ -197,7 +208,7 @@ void main_window::load_data() {
     if (load_2D(dir + "/I.arma", I, Imin, Imax)) {
         xobservable * current = new xobservable("Current (spatial)", "I / A", x, t);
         current->add_data({ "Current", I, Imin, Imax });
-        observables.push_back(std::unique_ptr<observale>(current));
+        observables.push_back(std::move(std::unique_ptr<observable>(current)));
     }
 
     // load V.arma
@@ -206,10 +217,10 @@ void main_window::load_data() {
     if (load_2D(dir + "/V.arma", V, Vmin, Vmax)) {
         if (V.size() == 3) {
             tobservable * voltage = new tobservable("Voltage", "V / V", x, t);
-            tobservable->add_data({ "V_s", V[0], Vmin, Vmax });
-            tobservable->add_data({ "V_g", V[1], Vmin, Vmax });
-            tobservable->add_data({ "V_d", V[2], Vmin, Vmax });
-            observables.push_back(std::unique_ptr<observable>(voltage));
+            voltage->add_data({ "V_s", V[0], Vmin, Vmax });
+            voltage->add_data({ "V_g", V[1], Vmin, Vmax });
+            voltage->add_data({ "V_d", V[2], Vmin, Vmax });
+            observables.push_back(std::move(std::unique_ptr<observable>(voltage)));
         }
     }
 
@@ -227,7 +238,8 @@ void main_window::load_data() {
 }
 
 void main_window::select_observable(int index) {
-    if (index < observables.size()) {
+    if ((unsigned)index < observables.size()) {
+        observables[index]->setup(plot);
         observables[index]->update(plot, time_index);
     }
 }
@@ -242,6 +254,10 @@ void main_window::set_time(int val) {
     qts.setRealNumberPrecision(5);
     qts << t[time_index] * 1e12 << " ps";
     time_label.setText(qs);
+
+    if ((unsigned)selection_box.currentIndex() < observables.size()) {
+        observables[selection_box.currentIndex()]->update(plot, time_index);
+    }
 }
 
 #endif

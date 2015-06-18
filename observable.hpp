@@ -6,18 +6,22 @@
 #include <QString>
 #include <iostream>
 
+#include "graph_data.hpp"
 #include "qcustomplot.hpp"
-
 
 class observable {
 public:
     QString title;
     QString ylabel;
 
-    QVector<double> x, t;
+    QVector<double> x;
+    QVector<double> t;
 
-    virtual void setup(QCustomPlot * qcp) = 0;
-    virtual void update(QCustomPlot * qcp, int m = 0) = 0;
+    virtual inline ~observable() {
+    }
+
+    virtual void setup(QCustomPlot & qcp) = 0;
+    virtual void update(QCustomPlot & qcp, int m = 0) = 0;
 };
 
 // xobservable
@@ -25,42 +29,46 @@ public:
 
 class xobservable : public observable {
 public:
-    static const QString xlabel = "x / nm";
-
     QVector<xgraph_data> data;
 
     inline xobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t);
-    inline void setup(QCustomPlot * qcp) override;
-    inline void update(QCustomPlot * qcp, int m = 0) override;
+    inline void setup(QCustomPlot & qcp) override;
+    inline void update(QCustomPlot & qcp, int m = 0) override;
     inline void add_data(const xgraph_data & multigraph_data);
 };
 
-xobservable::xobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t)
-    : observable{title, ylabel, x, t} {
+xobservable::xobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t) {
+    this->title = title;
+    this->ylabel = ylabel;
+    this->x = x;
+    this->t = t;
 }
 
-void xobservable::setup(QCustomPlot * qcp) {
-    qcp->clearGraphs();
+void xobservable::setup(QCustomPlot & qcp) {
+    static const QString xlabel = "x / nm";
 
-    qcp->xAxis->setRange(*(x.begin()), *(x.end())); // assume that x is ordered
-    qcp->xAxis->setLabel(xlabel);
+    qcp.clearGraphs();
+    qcp.clearItems();
 
-    double global_min = +1e318;
-    double global_max = -1e318;
+    qcp.xAxis->setRange(*(x.begin()), *(x.end() - 1)); // assume that x is ordered
+    qcp.xAxis->setLabel(xlabel);
+
+    double global_min = +1e200;
+    double global_max = -1e200;
     for (int i = 0; i < data.size(); ++i) {
-        qcp->addGraph();
+        qcp.addGraph();
         global_min = (global_min < data[i].min) ? global_min : data[i].min;
         global_max = (global_max > data[i].max) ? global_max : data[i].max;
     }
-    qcp->yAxis->setRange(global_min, global_max);
-    qcp->yAxis->setLabel(ylabel);
+    qcp.yAxis->setRange(global_min, global_max);
+    qcp.yAxis->setLabel(ylabel);
 }
 
-void xobservable::update(QCustomPlot * qcp, int m = 0) {
+void xobservable::update(QCustomPlot & qcp, int m) {
     for (int i = 0; i < data.size(); ++i) {
-        qcp->graph(i)->setData(x, data.data[i][m]);
+        qcp.graph(i)->setData(x, data[i].data[m]);
     }
-    qcp->replot();
+    qcp.replot();
 }
 
 void xobservable::add_data(const xgraph_data & multigraph_data) {
@@ -72,54 +80,62 @@ void xobservable::add_data(const xgraph_data & multigraph_data) {
 
 class tobservable : public observable {
 public:
-    static const QString xlabel = "t / s";
-
     QVector<tgraph_data> data;
 
-    inline xobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t);
-    inline void setup(QCustomPlot * qcp) override;
-    inline void update(QCustomPlot * qcp, int m = 0) override;
+    inline tobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t);
+    inline void setup(QCustomPlot & qcp) override;
+    inline void update(QCustomPlot & qcp, int m = 0) override;
     inline void add_data(const tgraph_data & graph_data);
 };
 
-void tobservable::setup(QCustomPlot * qcp) {
-    qcp->clearGraphs();
+tobservable::tobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t) {
+    this->title = title;
+    this->ylabel = ylabel;
+    this->x = x;
+    this->t = t;
+}
 
-    qcp->xAxis->setRange(*(t.begin()), *(t.end())); // assume that t is ordered
-    qcp->xAxis->setLabel(xlabel);
+void tobservable::setup(QCustomPlot & qcp) {
+    static const QString xlabel = "t / s";
 
-    double global_min = +1e318;
-    double global_max = -1e318;
+    qcp.clearGraphs();
+    qcp.clearItems();
+
+    qcp.xAxis->setRange(*(t.begin()), *(t.end() - 1)); // assume that t is ordered
+    qcp.xAxis->setLabel(xlabel);
+
+    double global_min = +1e200;
+    double global_max = -1e200;
     for (int i = 0; i < data.size(); ++i) {
-        qcp->addGraph();
+        qcp.addGraph();
         global_min = (global_min < data[i].min) ? global_min : data[i].min;
         global_max = (global_max > data[i].max) ? global_max : data[i].max;
 
         // setup the data-tracers:
-        data[i].tracer = new QCPItemTracer(qcp);
-        qcp->addItem(data[i].tracer);
-        data[i].tracer->setGraph(qcp->graph(i));
+        data[i].tracer = new QCPItemTracer(&qcp);
+        qcp.addItem(data[i].tracer);
+        data[i].tracer->setGraph(qcp.graph(i));
 
-//        data[i].tracer->setInterpolating(true);
-//        data[i].tracer->setStyle(QCPItemTracer::tsCircle);
-//        data[i].tracer->setPen(QPen(Qt::red));
-//        data[i].tracer->setBrush(Qt::red);
-//        data[i].tracer->tracer->setSize(7);
+        data[i].tracer->setInterpolating(true);
+        data[i].tracer->setStyle(QCPItemTracer::tsCircle);
+        data[i].tracer->setPen(QPen(Qt::red));
+        data[i].tracer->setBrush(Qt::red);
+        data[i].tracer->setSize(7);
     }
-    qcp->yAxis->setRange(global_min, global_max);
-    qcp->yAxis->setLabel(ylabel);
+    qcp.yAxis->setRange(global_min, global_max);
+    qcp.yAxis->setLabel(ylabel);
 
 }
 
-void tobservable::update(QCustomPlot * qcp, int m = 0) {
+void tobservable::update(QCustomPlot & qcp, int m) {
     for (int i = 0; i < data.size(); ++i) {
-        qcp->graph(i)->setData(t, data[i].data);
+        qcp.graph(i)->setData(t, data[i].data);
         data[i].tracer->setGraphKey(t[m]);
     }
-    qcp->replot();
+    qcp.replot();
 }
 
-void tobservable::add_data(const xgraph_data & graph_data) {
+void tobservable::add_data(const tgraph_data & graph_data) {
     data.push_back(graph_data);
 }
 
