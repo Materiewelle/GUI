@@ -149,9 +149,11 @@ void main_window::load_data() {
     // load xtics.arma, ttics.arma
     double xmin, xmax, tmin, tmax;
     if (!load_1D(dir + "/xtics.arma", x, xmin, xmax)) {
+        std::cout << "failed to load x data!" << std::endl;
         return;
     }
     if (!load_1D(dir + "/ttics.arma", t, tmin, tmax)) {
+        std::cout << "failed to load t data!" << std::endl;
         return;
     }
 
@@ -194,6 +196,8 @@ void main_window::load_data() {
             bandstructure->add_data({ "Valence Band", vband, vbandmin, vbandmax });
             bandstructure->add_data({ "Conduction Band", cband, cbandmin, cbandmax });
             observables.push_back(std::move(std::unique_ptr<xobservable>(bandstructure)));
+        } else {
+            std::cout << "failed to load phi data!" << std::endl;
         }
     }
 
@@ -204,6 +208,8 @@ void main_window::load_data() {
         xobservable * charge_density = new xobservable("Charge density", "n / C m^-3", x, t);
         charge_density->add_data({ "Charge density", n, nmin, nmax });
         observables.push_back(std::move(std::unique_ptr<observable>(charge_density)));
+    } else {
+        std::cout << "failed to load n data!" << std::endl;
     }
 
     // load I.arma
@@ -213,6 +219,10 @@ void main_window::load_data() {
         xobservable * current = new xobservable("Current (spatial)", "I / A", x, t);
         current->add_data({ "Current", I, Imin, Imax });
         observables.push_back(std::move(std::unique_ptr<observable>(current)));
+
+//        xobservable * current_log = new xobservable("Current (spatial) with logscale", "I / A", x, t, true);
+//        current_log->add_data({ "Current", I, Imin, Imax });
+//        observables.push_back(std::move(std::unique_ptr<observable>(current_log)));
 
         QVector<double> I_s(I.size());
         QVector<double> I_d(I.size());
@@ -246,9 +256,19 @@ void main_window::load_data() {
         current_s->add_data({ "Source Current", I_s, Ismin, Ismax });
         observables.push_back(std::move(std::unique_ptr<observable>(current_s)));
 
+//        tobservable * current_s_log = new tobservable("Source Current with logscale", "I / A", x, t, true);
+//        current_s_log->add_data({ "Source Current", I_s, Ismin, Ismax });
+//        observables.push_back(std::move(std::unique_ptr<observable>(current_s_log)));
+
         tobservable * current_d = new tobservable("Drain Current", "I / A", x, t);
         current_d->add_data({ "Drain Current", I_d, Idmin, Idmax });
         observables.push_back(std::move(std::unique_ptr<observable>(current_d)));
+
+//        tobservable * current_d_log = new tobservable("Drain Current with logscale", "I / A", x, t, true);
+//        current_d_log->add_data({ "Drain Current", I_d, Idmin, Idmax });
+//        observables.push_back(std::move(std::unique_ptr<observable>(current_d_log)));
+    } else {
+        std::cout << "failed to load I data!" << std::endl;
     }
 
     // load V.arma
@@ -262,6 +282,8 @@ void main_window::load_data() {
             voltage->add_data({ "V_d", V[2], Vmin, Vmax });
             observables.push_back(std::move(std::unique_ptr<observable>(voltage)));
         }
+    } else {
+        std::cout << "failed to load V data!" << std::endl;
     }
 
     // set time to 0

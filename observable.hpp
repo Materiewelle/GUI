@@ -26,6 +26,8 @@ public:
     QVector<double> x;
     QVector<double> t;
 
+    bool logscale = false;
+
     double global_min = +1e200;
     double global_max = -1e200;
 
@@ -43,17 +45,18 @@ class xobservable : public observable {
 public:
     QVector<xgraph_data> data;
 
-    inline xobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t);
+    inline xobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t, bool logscale = false);
     inline void setup(QCustomPlot & plot) override;
     inline void update(QCustomPlot & plot, int m = 0) override;
     inline void add_data(const xgraph_data & multigraph_data);
 };
 
-xobservable::xobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t) {
+xobservable::xobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t, bool logscale) {
     this->title = title;
     this->ylabel = ylabel;
     this->x = x;
     this->t = t;
+    this->logscale = logscale;
 }
 
 void xobservable::setup(QCustomPlot & plot) {
@@ -64,6 +67,12 @@ void xobservable::setup(QCustomPlot & plot) {
 
     plot.xAxis->setRange(*(x.begin()), *(x.end() - 1)); // assume that x is ordered
     plot.xAxis->setLabel(xlabel);
+
+    if (logscale) {
+        plot.yAxis->setScaleType(QCPAxis::stLogarithmic);
+    } else {
+        plot.yAxis->setScaleType(QCPAxis::stLinear);
+    }
 
     for (int i = 0; i < data.size(); ++i) {
         plot.addGraph();
@@ -94,7 +103,7 @@ class tobservable : public observable {
 public:
     QVector<tgraph_data> data;
 
-    inline tobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t);
+    inline tobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t, bool logscale = false);
     inline void setup(QCustomPlot & plot) override;
     inline void update(QCustomPlot & plot, int m = 0) override;
     inline void setup_tracer(int i);
@@ -102,11 +111,12 @@ public:
     inline void add_data(const tgraph_data & graph_data);
 };
 
-tobservable::tobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t) {
+tobservable::tobservable(const QString & title, const QString & ylabel, const QVector<double> & x, const QVector<double> & t, bool logscale) {
     this->title = title;
     this->ylabel = ylabel;
     this->x = x;
     this->t = t;
+    this->logscale = logscale;
 }
 
 void tobservable::setup(QCustomPlot & plot) {
@@ -117,6 +127,12 @@ void tobservable::setup(QCustomPlot & plot) {
 
     plot.xAxis->setRange(*(t.begin()), *(t.end() - 1)); // assume that t is ordered
     plot.xAxis->setLabel(xlabel);
+
+    if (logscale) {
+        plot.yAxis->setScaleType(QCPAxis::stLogarithmic);
+    } else {
+        plot.yAxis->setScaleType(QCPAxis::stLinear);
+    }
 
     for (int i = 0; i < data.size(); ++i) {
         // create and customize the graph
@@ -134,6 +150,7 @@ void tobservable::setup(QCustomPlot & plot) {
         plot.addItem(data[i].label);
         plot.addItem(data[i].arrow);
         data[i].tracer->setGraph(plot.graph(i));
+        data[i].label->setBrush(QBrush(QColor(255,255,255,130))); //transparent white
 
         setup_tracer(i);
     }
