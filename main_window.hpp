@@ -97,8 +97,9 @@ void main_window::load_data() {
     QString dir = QFileDialog::getExistingDirectory(this, "Open Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
     // load device.ini
-    QFile device_file(dir + "/device.ini");
+    QFile device_file(dir + "/params.ini");
     if (!device_file.open(QFile::ReadOnly | QFile::Text)) {
+        std::cout << "error reading device parameters!" << std::endl;
         return;
     }
     QTextStream device_stream(&device_file);
@@ -107,7 +108,7 @@ void main_window::load_data() {
 
     auto load_1D = [] (const QString & file_name, QVector<double> & vec, double & min, double & max) -> bool {
         arma::vec av;
-        if (!av.quiet_load(file_name.toStdString())) {
+        if (!av.load(file_name.toStdString())) {
             return false;
         }
 
@@ -125,7 +126,7 @@ void main_window::load_data() {
 
     auto load_2D = [] (const QString & file_name, QVector<QVector<double>> & mat, double & min, double & max) -> bool {
         arma::mat am;
-        if (!am.quiet_load(file_name.toStdString())) {
+        if (!am.load(file_name.toStdString())) {
             return false;
         }
 
