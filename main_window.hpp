@@ -96,7 +96,7 @@ void main_window::load_data() {
     // open dialog
     QString dir = QFileDialog::getExistingDirectory(this, "Open Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
-    // load device.ini
+    // load params.ini
     QFile device_file(dir + "/params.ini");
     if (!device_file.open(QFile::ReadOnly | QFile::Text)) {
         std::cout << "error reading device parameters!" << std::endl;
@@ -172,21 +172,17 @@ void main_window::load_data() {
 
         bool ok = true;
         for (int i = 0; i < phi.size(); ++i) {
-            if (phi[i].size() != d.N_x) {
-                ok = false;
-                break;
-            }
             vband[i] = QVector<double>(phi[i].size());
             cband[i] = QVector<double>(phi[i].size());
-            for (int j = 0; j < d.N_sc; ++j) {
+            for (int j = 0; j < d.N_sc + 1; ++j) {
                 vband[i][j] = phi[i][j] - 0.5 * d.E_gc;
                 cband[i][j] = phi[i][j] + 0.5 * d.E_gc;
             }
-            for (int j = d.N_sc; j < d.N_x - d.N_dc; ++j) {
+            for (int j = d.N_sc + 1; j < d.N_x - d.N_dc + 1; ++j) {
                 vband[i][j] = phi[i][j] - 0.5 * d.E_g;
                 cband[i][j] = phi[i][j] + 0.5 * d.E_g;
             }
-            for (int j = d.N_x - d.N_dc; j < d.N_x; ++j) {
+            for (int j = d.N_x - d.N_dc + 1; j <= d.N_x; ++j) {
                 vband[i][j] = phi[i][j] - 0.5 * d.E_gc;
                 cband[i][j] = phi[i][j] + 0.5 * d.E_gc;
             }
@@ -279,8 +275,8 @@ void main_window::load_data() {
         if (V.size() == 3) {
             tobservable * voltage = new tobservable("Voltage", "V / V", x, t);
             voltage->add_data({ "V_s", V[0], Vmin, Vmax });
-            voltage->add_data({ "V_g", V[1], Vmin, Vmax });
-            voltage->add_data({ "V_d", V[2], Vmin, Vmax });
+            voltage->add_data({ "V_g", V[2], Vmin, Vmax });
+            voltage->add_data({ "V_d", V[1], Vmin, Vmax });
             observables.push_back(std::move(std::unique_ptr<observable>(voltage)));
         }
     } else {
